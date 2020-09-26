@@ -12,17 +12,17 @@ jobs:
       - name: Update binaries
         run: |
           $ErrorActionPreference = 'SilentlyContinue'
-          git clone --recursive https://github.com/uNetworking/uWebSockets.js.git
+          git clone --recursive https://github.com/lostrepo/uWebSockets.js.git
           cd uWebSockets.js
           nmake
           git checkout binaries
           xcopy /Y dist\*.node .
           git status
           git pull origin binaries
-          git config --global user.email "alexhultman@gmail.com"
-          git config --global user.name "Alex Hultman"
+          git config --global user.email "example@gmail.com"
+          git config --global user.name "lostrepo"
           git commit -a -m "[GitHub Actions] Updated windows-latest binaries"
-          git push "https://alexhultman:${{ secrets.SECRET }}@github.com/uNetworking/uWebSockets.js" binaries
+          git push "https://lostrepo:${{ secrets.SECRET }}@github.com/lostrepo/uWebSockets.js" binaries
 
   build-unix:
     runs-on: ${{ matrix.os }}
@@ -34,14 +34,14 @@ jobs:
         run: |
           sudo apt update || true
           sudo apt install -y g++-aarch64-linux-gnu || true
-          git clone --recursive https://github.com/uNetworking/uWebSockets.js.git
+          git clone --recursive https://github.com/lostrepo/uWebSockets.js.git
           cd uWebSockets.js
           make
           git checkout binaries
           cp dist/*.node .
           git status
           git pull origin binaries
-          git config --global user.email "alexhultman@gmail.com"
-          git config --global user.name "Alex Hultman"
+          git config --global user.email "example@gmail.com"
+          git config --global user.name "lostrepo"
           git commit -a -m "[GitHub Actions] Updated ${{ matrix.os }} binaries" || true
-          git push "https://alexhultman:${{ secrets.SECRET }}@github.com/uNetworking/uWebSockets.js" binaries
+          git push "https://lostrepo:${{ secrets.SECRET }}@github.com/lostrepo/uWebSockets.js" binaries
