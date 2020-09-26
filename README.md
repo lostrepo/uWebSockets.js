@@ -7,7 +7,9 @@
 <br><br>
 
 
-<a href="https://github.com/uNetworking/uWebSockets.js/releases"><img src="https://img.shields.io/github/v/release/uNetworking/uWebSockets.js"></a> <a href="https://lgtm.com/projects/g/uNetworking/uWebSockets.js/context:cpp"><img alt="Language grade: C/C++" src="https://img.shields.io/lgtm/grade/cpp/g/uNetworking/uWebSockets.js.svg?logo=lgtm&logoWidth=18"/></a> <img src="https://img.shields.io/badge/downloads-50,000,000+-green" />
+<a href="https://github.com/uNetworking/uWebSockets.js/releases"><img src="https://img.shields.io/github/v/release/uNetworking/uWebSockets.js"></a> <a href="https://lgtm.com/projects/g/uNetworking/uWebSockets.js/context:cpp"><img alt="Language grade: C/C++" src="https://img.shields.io/lgtm/grade/cpp/g/uNetworking/uWebSockets.js.svg?logo=lgtm&logoWidth=18"/></a> <img src="https://img.shields.io/badge/downloads-55%20million-pink" />
+
+[A note on speculation, lies & allegations](https://medium.com/@alexhultman/beware-of-tin-foil-hattery-f738b620468c)
 
 </div>
 <br><br>
@@ -62,10 +64,10 @@ Being written in native code directly targeting the Linux kernel makes it way fa
 
 ### :package: Install anywhere
 
-Install with `npm install uNetworking/uWebSockets.js#v18.4.0` or any such release. No compiler needed.
+Install with `npm install uNetworking/uWebSockets.js#v18.5.0` or any such [release](https://github.com/uNetworking/uWebSockets.js/releases). No compiler needed.
 
-* Runs on Linux (x64, ARM64), macOS (x64) and Windows (x64). Node.js 10, 11, 12, 13 & 14.
-* Installs from this GitHub repo, not the NPM registry. Production apps should rely on their own local copy.
+* Runs on Linux, macOS and Windows (ARM64, x64). Node.js 10, 11, 12, 13 & 14.
+* Installs from this GitHub repository, not the NPM registry; [hit "fork" to get your own copy](https://medium.com/@alexhultman/beware-of-tin-foil-hattery-f738b620468c).
 
 ### :briefcase: Commercially supported
 <a href="https://github.com/uNetworking">uNetworking AB</a> is a Swedish consulting & contracting company dealing with anything related to µWebSockets; development, support and customer success.
