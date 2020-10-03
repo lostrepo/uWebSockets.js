@@ -42,16 +42,29 @@ struct node_version {
 
 /* Downloads headers, creates folders */
 void prepare() {
-    if (run("mkdir dist") || run("mkdir targets")) {
-        return;
-    }
+    #ifdef IS_WINDOWS
+    run("if not exist dist mkdir dist");
+    run("if not exist targets mkdir targets");
+    #else
+    run("test -d dist || mkdir dist");
+    run("test -d targets || mkdir targets");
+    #endif
 
     /* For all versions */
-	unsigned int i;
+    unsigned int i;
     for (i = 0; i < sizeof(versions) / sizeof(struct node_version); i++) {
-        run("curl -OJ https://nodejs.org/dist/%s/node-%s-headers.tar.gz", versions[i].name, versions[i].name);
-        run("tar xzf node-%s-headers.tar.gz -C targets", versions[i].name);
-        run("curl https://nodejs.org/dist/%s/win-x64/node.lib > targets/node-%s/node.lib", versions[i].name, versions[i].name);
+        #ifdef IS_WINDOWS
+        if (run("if not exist targets/node-%s/node.lib", versions[i].name)){
+            if (run("if not exist node-%s-headers.tar.gz", versions[i].name)){
+        #else
+        if (run("test -f targets/node-%s/node.lib", versions[i].name)){
+            if (run("test -f node-%s-headers.tar.gz", versions[i].name)){
+        #endif
+                run("curl -OJ https://nodejs.org/dist/%s/node-%s-headers.tar.gz", versions[i].name, versions[i].name);
+            }
+            run("tar xzf node-%s-headers.tar.gz -C targets", versions[i].name);
+            run("curl https://nodejs.org/dist/%s/win-x64/node.lib > targets/node-%s/node.lib", versions[i].name, versions[i].name);
+        }
     }
 }
 
@@ -60,7 +73,7 @@ void build(char *compiler, char *cpp_compiler, char *cpp_linker, char *os, char 
     char *c_shared = "-DLIBUS_USE_LIBUV -DLIBUS_USE_OPENSSL -flto -O3 -c -fPIC -I uWebSockets/uSockets/src uWebSockets/uSockets/src/*.c uWebSockets/uSockets/src/eventing/*.c uWebSockets/uSockets/src/crypto/*.c";
     char *cpp_shared = "-DUWS_WITH_PROXY -DLIBUS_USE_LIBUV -DLIBUS_USE_OPENSSL -flto -O3 -c -fPIC -std=c++17 -I uWebSockets/uSockets/src -I uWebSockets/src src/addon.cpp uWebSockets/uSockets/src/crypto/sni_tree.cpp";
 
-	unsigned int i;
+    unsigned int i;
     for (i = 0; i < sizeof(versions) / sizeof(struct node_version); i++) {
         run("%s %s -I targets/node-%s/include/node", compiler, c_shared, versions[i].name);
         run("%s %s -I targets/node-%s/include/node", cpp_compiler, cpp_shared, versions[i].name);
@@ -79,7 +92,7 @@ void copy_files() {
 /* Special case for windows */
 void build_windows(char *arch) {
     /* For all versions */
-	unsigned int i;
+    unsigned int i;
     for (i = 0; i < sizeof(versions) / sizeof(struct node_version); i++) {
         run("cl /W3 /D \"UWS_WITH_PROXY\" /D \"LIBUS_USE_LIBUV\" /D \"LIBUS_USE_OPENSSL\" /std:c++17 /I uWebSockets/uSockets/src uWebSockets/uSockets/src/*.c uWebSockets/uSockets/src/crypto/sni_tree.cpp "
             "uWebSockets/uSockets/src/eventing/*.c uWebSockets/uSockets/src/crypto/*.c /I targets/node-%s/include/node /I uWebSockets/src /EHsc "
