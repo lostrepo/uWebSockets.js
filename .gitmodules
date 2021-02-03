@@ -1,4 +1,3 @@
 [submodule "uWebSockets"]
 	path = uWebSockets
-	url = https://github.com/lostero/uWebSockets
-	branch = v0.16.x
+	url = https://github.com/lostrepo/uWebSockets

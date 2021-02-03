@@ -36,29 +36,46 @@ struct node_version {
     {"v10.17.0", "64"},
     {"v11.15.0", "67"},
     {"v12.13.0", "72"},
-    {"v13.1.0", "79"}
+    {"v13.1.0", "79"},
+    {"v14.0.0", "83"},
+    {"v15.0.0", "88"}
 };
 
 /* Downloads headers, creates folders */
 void prepare() {
-    if (run("mkdir dist") || run("mkdir targets")) {
-        return;
-    }
+    #ifdef IS_WINDOWS
+    run("if not exist dist mkdir dist");
+    run("if not exist targets mkdir targets");
+    #else
+    run("test -d dist || mkdir dist");
+    run("test -d targets || mkdir targets");
+    #endif
 
     /* For all versions */
-    for (unsigned int i = 0; i < sizeof(versions) / sizeof(struct node_version); i++) {
-        run("curl -OJ https://nodejs.org/dist/%s/node-%s-headers.tar.gz", versions[i].name, versions[i].name);
-        run("tar xzf node-%s-headers.tar.gz -C targets", versions[i].name);
-        run("curl https://nodejs.org/dist/%s/win-x64/node.lib > targets/node-%s/node.lib", versions[i].name, versions[i].name);
+    unsigned int i;
+    for (i = 0; i < sizeof(versions) / sizeof(struct node_version); i++) {
+        #ifdef IS_WINDOWS
+        if (run("if not exist targets/node-%s/node.lib", versions[i].name)){
+            if (run("if not exist node-%s-headers.tar.gz", versions[i].name)){
+        #else
+        if (run("test -f targets/node-%s/node.lib", versions[i].name)){
+            if (run("test -f node-%s-headers.tar.gz", versions[i].name)){
+        #endif
+                run("curl -OJ https://nodejs.org/dist/%s/node-%s-headers.tar.gz", versions[i].name, versions[i].name);
+            }
+            run("tar xzf node-%s-headers.tar.gz -C targets", versions[i].name);
+            run("curl https://nodejs.org/dist/%s/win-x64/node.lib > targets/node-%s/node.lib", versions[i].name, versions[i].name);
+        }
     }
 }
 
 /* Build for Unix systems */
 void build(char *compiler, char *cpp_compiler, char *cpp_linker, char *os, char *arch) {
     char *c_shared = "-DLIBUS_USE_LIBUV -DLIBUS_USE_OPENSSL -flto -O3 -c -fPIC -I uWebSockets/uSockets/src uWebSockets/uSockets/src/*.c uWebSockets/uSockets/src/eventing/*.c uWebSockets/uSockets/src/crypto/*.c";
-    char *cpp_shared = "-DLIBUS_USE_LIBUV -DLIBUS_USE_OPENSSL -flto -O3 -c -fPIC -std=c++17 -I uWebSockets/uSockets/src -I uWebSockets/src src/addon.cpp";
+    char *cpp_shared = "-DUWS_WITH_PROXY -DLIBUS_USE_LIBUV -DLIBUS_USE_OPENSSL -flto -O3 -c -fPIC -std=c++17 -I uWebSockets/uSockets/src -I uWebSockets/src src/addon.cpp uWebSockets/uSockets/src/crypto/sni_tree.cpp";
 
-    for (unsigned int i = 0; i < sizeof(versions) / sizeof(struct node_version); i++) {
+    unsigned int i;
+    for (i = 0; i < sizeof(versions) / sizeof(struct node_version); i++) {
         run("%s %s -I targets/node-%s/include/node", compiler, c_shared, versions[i].name);
         run("%s %s -I targets/node-%s/include/node", cpp_compiler, cpp_shared, versions[i].name);
         run("%s %s %s -o dist/uws_%s_%s_%s.node", cpp_compiler, "-flto -O3 *.o -std=c++17 -shared", cpp_linker, os, arch, versions[i].abi);
@@ -76,8 +93,9 @@ void copy_files() {
 /* Special case for windows */
 void build_windows(char *arch) {
     /* For all versions */
-    for (unsigned int i = 0; i < sizeof(versions) / sizeof(struct node_version); i++) {
-        run("cl /D \"LIBUS_USE_LIBUV\" /D \"LIBUS_USE_OPENSSL\" /std:c++17 /I uWebSockets/uSockets/src uWebSockets/uSockets/src/*.c "
+    unsigned int i;
+    for (i = 0; i < sizeof(versions) / sizeof(struct node_version); i++) {
+        run("cl /W3 /D \"UWS_WITH_PROXY\" /D \"LIBUS_USE_LIBUV\" /D \"LIBUS_USE_OPENSSL\" /std:c++17 /I uWebSockets/uSockets/src uWebSockets/uSockets/src/*.c uWebSockets/uSockets/src/crypto/sni_tree.cpp "
             "uWebSockets/uSockets/src/eventing/*.c uWebSockets/uSockets/src/crypto/*.c /I targets/node-%s/include/node /I uWebSockets/src /EHsc "
             "/Ox /LD /Fedist/uws_win32_%s_%s.node src/addon.cpp targets/node-%s/node.lib",
             versions[i].name, arch, versions[i].abi, versions[i].name);
@@ -94,11 +112,19 @@ int main() {
 #else
 #ifdef IS_MACOS
     /* Apple special case */
-    build("clang -mmacosx-version-min=10.7",
-          "clang++ -stdlib=libc++ -mmacosx-version-min=10.7",
+    build("clang -mmacosx-version-min=10.14",
+          "clang++ -stdlib=libc++ -mmacosx-version-min=10.14",
           "-undefined dynamic_lookup",
           OS,
           "x64");
+    
+        /* Try and build for arm64 macOS 11 */
+        build("clang -target arm64-apple-macos11",
+          "clang++ -stdlib=libc++ -target arm64-apple-macos11",
+          "-undefined dynamic_lookup",
+          OS,
+          "arm64");
+    
 #else
     /* Linux */
     build("clang",
